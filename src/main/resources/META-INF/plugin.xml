@@ -11,6 +11,7 @@
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends optional="true">com.intellij.modules.jcef</depends>
 
     <resource-bundle>messages.BlockbenchBundle</resource-bundle>
 
