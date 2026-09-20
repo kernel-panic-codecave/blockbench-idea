@@ -6,6 +6,11 @@
 ### Added
 - Development changes for the next release.
 
+## [0.1.2] - 2026-09-19
+### Changed
+- Embedded editors now hide Blockbench's tab bar and the File menu's New, Open Model, and Open from Link entries, since the IDE owns files and projects.
+- The Open Model and Open from Link actions are also removed from Blockbench's action selector and keybinds.
+
 ## [0.1.1] - 2026-09-19
 ### Added
 - Added a Blockbench Project action using IntelliJ's standard New File dialog.

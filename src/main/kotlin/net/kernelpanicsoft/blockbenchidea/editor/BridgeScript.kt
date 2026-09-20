@@ -12,6 +12,8 @@ package net.kernelpanicsoft.blockbenchidea.editor
  *  - loads the model passed in via `__bbIdeaSetModel(name, content)`,
  *  - serializes the current project when requested by the native IntelliJ
  *    Save action through `__bbIdeaSave`,
+ *  - hides Blockbench UI that the IDE already provides (the tab bar and the
+ *    File menu's new/open entries),
  *  - periodically reports the unsaved-modified state of the current project.
  */
 internal object BridgeScript {
@@ -92,6 +94,35 @@ internal object BridgeScript {
                     style.id = 'bb-idea-hide-download-app';
                     style.textContent = '#web_download_button { display: none !important; }';
                     (document.head || document.documentElement).appendChild(style);
+                }
+            }
+
+            function hideUnwantedInterface() {
+                if (!document.getElementById('bb-idea-hide-ui')) {
+                    var style = document.createElement('style');
+                    style.id = 'bb-idea-hide-ui';
+                    style.textContent =
+                        '#tab_bar { display: none !important; }' +
+                        '#title_bar_home_button { display: none !important; }';
+                    (document.head || document.documentElement).appendChild(style);
+                }
+                try {
+                    if (window.BarItems) {
+                        ['open_model', 'open_from_link'].forEach(function (id) {
+                            var action = window.BarItems[id];
+                            if (action && typeof action === 'object') {
+                                action.condition = function () { return false; };
+                            }
+                        });
+                    }
+                    var fileMenu = window.MenuBar && window.MenuBar.menus && window.MenuBar.menus.file;
+                    if (fileMenu && typeof fileMenu.removeAction === 'function') {
+                        ['new', 'open_model', 'open_from_link'].forEach(function (id) {
+                            try { fileMenu.removeAction(id); } catch (e) {}
+                        });
+                    }
+                } catch (e) {
+                    if (window.console) console.warn('bb-idea hide interface:', e);
                 }
             }
 
@@ -406,6 +437,7 @@ internal object BridgeScript {
                     window['__bbIdeaReadySent'] = true;
                     window['__bbIdeaSend']({op: 'ready', payload: String(Blockbench.version || '')});
                     hideDownloadAppButton();
+                    hideUnwantedInterface();
                     window['__bbIdeaTryLoadNow']();
                     installImportBridge();
                     installExportBridge();
