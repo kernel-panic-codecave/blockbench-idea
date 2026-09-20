@@ -6,6 +6,16 @@
 ### Added
 - Development changes for the next release.
 
+## [0.1.1] - 2026-09-19
+### Added
+- Added a Blockbench Project action using IntelliJ's standard New File dialog.
+- Added the Blockbench icon to the project creation action and template.
+
+### Changed
+- New projects open Blockbench's native start screen so project setup uses Blockbench's own formats and workflow.
+- Applied IntelliJ UI colors only to Blockbench interface chrome without changing the native 3D viewport.
+- Improved compatibility with IDEs without JCEF and modern IntelliJ service registration.
+
 ## [0.1.0] - 2026-09-19
 ### Added
 - Embedded Blockbench editor for `.bbmodel` files with JCEF.

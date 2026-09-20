@@ -1,0 +1,10 @@
+{
+  "meta": {"format_version": "4.10", "model_format": "free", "box_uv": false},
+  "name": "${NAME}",
+  "resolution": {"width": 16, "height": 16},
+  "elements": [],
+  "outliner": [],
+  "textures": [],
+  "animations": [],
+  "__bbIdeaNewProject": true
+}

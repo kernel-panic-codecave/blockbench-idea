@@ -297,40 +297,63 @@ internal object BridgeScript {
 
             window['__bbIdeaApplyIdeColors'] = function (colors) {
                 try {
-                    if (!colors || !document.body) return;
-                    var lightMode = colors['__bbIdeaLightMode'] === true;
-                    var themeData = {
-                        id: 'blockbench-idea',
-                        name: 'IntelliJ IDEA',
-                        author: 'Blockbench Idea',
-                        source: 'custom',
-                        colors: colors,
-                        css: ''
-                    };
-                    if (typeof window.CustomTheme === 'function') {
-                        var theme = window['__bbIdeaIdeTheme'];
-                        if (!theme) {
-                            theme = new window.CustomTheme(themeData);
-                            window['__bbIdeaIdeTheme'] = theme;
-                        } else if (typeof theme.extend === 'function') {
-                            theme.extend(themeData);
-                        }
-                        if (typeof theme.load === 'function') {
-                            theme.load();
-                            document.body.classList.toggle('light_mode', lightMode);
-                            return;
-                        }
-                    }
+                    if (!colors || !document.documentElement) return;
+                    var selector = [
+                        '#main_toolbar',
+                        '#left_bar',
+                        '#right_bar',
+                        '#status_bar',
+                        '#panel_selector_bar',
+                        '#start_screen',
+                        '#action_selector'
+                    ].join(',');
+                    var rules = [];
                     Object.keys(colors).forEach(function (key) {
                         if (key.indexOf('__bbIdea') !== 0 && colors[key]) {
-                            document.body.style.setProperty('--color-' + key, colors[key]);
+                            var property = key === 'accent'
+                                ? '--bb-idea-accent'
+                                : '--color-' + key;
+                            rules.push(property + ':' + colors[key]);
                         }
                     });
-                    document.body.classList.toggle('light_mode', lightMode);
+                    var style = document.getElementById('bb-idea-ui-colors');
+                    if (!style) {
+                        style = document.createElement('style');
+                        style.id = 'bb-idea-ui-colors';
+                        (document.head || document.documentElement).appendChild(style);
+                    }
+                    style.textContent = selector + '{' + rules.join(';') + '}';
                 } catch (e) {
                     if (window.console) console.warn('bb-idea color scheme sync:', e);
                 }
             };
+
+            window['__bbIdeaPrepareNewProject'] = function (name, path) {
+                try {
+                    window.__bbIdeaPendingProject = {name: String(name || ''), path: String(path || '')};
+                    if (typeof window.selectNoProject === 'function') {
+                        window.selectNoProject();
+                    } else if (typeof window.setStartScreen === 'function') {
+                        window.setStartScreen(true);
+                    }
+                    hideProjectLoading();
+                } catch (e) {
+                    if (window.console) console.warn('bb-idea prepare project:', e);
+                }
+            };
+
+            if (window.Blockbench && typeof window.Blockbench.on === 'function' &&
+                !window.__bbIdeaNewProjectListener) {
+                window.__bbIdeaNewProjectListener = window.Blockbench.on('new_project', function (event) {
+                    var pending = window.__bbIdeaPendingProject;
+                    if (!pending || !event || !event.project) return;
+                    event.project.name = pending.name;
+                    event.project.save_path = pending.path;
+                    event.project.export_path = pending.path;
+                    event.project.saved = false;
+                    window.__bbIdeaPendingProject = null;
+                });
+            }
 
             function reportModified() {
                 if (!window.Blockbench) return;

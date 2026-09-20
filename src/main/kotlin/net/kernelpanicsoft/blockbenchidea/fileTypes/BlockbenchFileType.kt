@@ -17,7 +17,7 @@ class BlockbenchFileType : FileType {
         IconLoader.getIcon("/icons/blockbench.svg", BlockbenchFileType::class.java)
     }
 
-    override fun getName(): String = "Blockbench Model"
+    override fun getName(): String = "BlockbenchModel"
 
     override fun getDisplayName(): String = BlockbenchBundle["editor.fileTypeName"]
 

@@ -7,9 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileEditor.FileEditor
@@ -47,6 +44,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.pow
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.UIManager
@@ -75,7 +73,10 @@ class BlockbenchFileEditor internal constructor(
             canGoBack: Boolean,
             canGoForward: Boolean,
         ) {
-            if (!isLoading) {
+            if (isLoading) {
+                bridgeInjected = false
+                pageReady = false
+            } else {
                 onPageLoaded(cefBrowser?.url.orEmpty())
             }
         }
@@ -152,6 +153,8 @@ class BlockbenchFileEditor internal constructor(
 
     @Volatile
     private var bridgeInjected = false
+    private var pageReady = false
+    private var pendingNewProject: Pair<String, String>? = null
 
     @Volatile
     private var saveInProgress = false
@@ -175,7 +178,7 @@ class BlockbenchFileEditor internal constructor(
 
     init {
         val loading = buildLoadingPanel()
-        val editorBackground = EditorColorsManager.getInstance().globalScheme.defaultBackground
+        val editorBackground = UIManager.getColor("Panel.background") ?: java.awt.Color(30, 33, 39)
         loading.background = editorBackground
         val loadingContainer = JPanel(BorderLayout()).apply {
             isOpaque = true
@@ -275,6 +278,19 @@ class BlockbenchFileEditor internal constructor(
         Disposer.dispose(this)
     }
 
+    internal fun prepareNewProject(name: String, path: String) {
+        if (disposed) return
+        pendingNewProject = name to path
+        if (!pageReady) return
+        val current = browser?.cefBrowser ?: return
+        current.executeJavaScript(
+            "window.__bbIdeaPrepareNewProject(${jsStringLiteral(name)}," +
+                "${jsStringLiteral(path)});",
+            current.url,
+            0,
+        )
+    }
+
     // ------------------------------------------------------------------ Bridge handling
 
     private fun handleBridgeMessage(raw: String) {
@@ -324,10 +340,23 @@ class BlockbenchFileEditor internal constructor(
     }
 
     private fun onPageReady() {
+        pageReady = true
         ApplicationManager.getApplication().invokeLater {
             if (disposed) return@invokeLater
             val current = browser?.cefBrowser ?: return@invokeLater
             val content = readFileContent() ?: return@invokeLater
+            if (content.contains("\"__bbIdeaNewProject\"")) {
+                current.executeJavaScript(
+                    "window.__bbIdeaPrepareNewProject(${jsStringLiteral(file.nameWithoutExtension)}," +
+                        "${jsStringLiteral(file.path)});",
+                    current.url,
+                    0,
+                )
+                val colorJs = "window.__bbIdeaApplyIdeColors(" + ideColors() + ");"
+                runCatching { current.executeJavaScript(colorJs, current.url, 0) }
+                showLoadedBrowser()
+                return@invokeLater
+            }
             val js = "window.__bbIdeaSetModel(" +
                 jsStringLiteral(file.name) + ", " +
                 jsStringLiteral(content) + ", " +
@@ -337,6 +366,15 @@ class BlockbenchFileEditor internal constructor(
             val colorJs = "window.__bbIdeaApplyIdeColors(" + ideColors() + ");"
             runCatching { current.executeJavaScript(colorJs, current.url, 0) }
                 .onFailure { logger.warn("Failed to apply IntelliJ color scheme to Blockbench", it) }
+            pendingNewProject?.let { (name, path) ->
+                pendingNewProject = null
+                current.executeJavaScript(
+                    "window.__bbIdeaPrepareNewProject(${jsStringLiteral(name)}," +
+                        "${jsStringLiteral(path)});",
+                    current.url,
+                    0,
+                )
+            }
         }
 
     }
@@ -367,40 +405,77 @@ class BlockbenchFileEditor internal constructor(
     }
 
     private fun ideColors(): String {
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        val background = scheme.defaultBackground
-        val foreground = scheme.defaultForeground
-        val selected = scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR) ?: background
-        val accent = scheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES)?.foregroundColor ?: selected
+        val background = uiColor("Panel.background", "window") ?: java.awt.Color(30, 33, 39)
+        val foreground = uiColor("Panel.foreground", "Label.foreground") ?: java.awt.Color(202, 202, 212)
+        val selected = uiColor("List.selectionBackground", "Table.selectionBackground") ?: background
+        val accent = visibleColor(
+            background,
+            uiColor("Component.accentColor", "Link.foreground") ?: selected,
+        )
         val values = linkedMapOf(
             "ui" to background,
-            "back" to background,
-            "dark" to background.darker(),
-            "border" to background.darker(),
-            "selected" to selected,
-            "elevated" to background.brighter(),
-            "button" to selected,
+            "elevated" to (uiColor("Panel.background", "window") ?: background).brighter(),
             "bright_ui" to foreground,
             "accent" to accent,
-            "frame" to background.darker(),
             "text" to foreground,
             "light" to foreground,
             "accent_text" to background,
             "bright_ui_text" to background,
             "subtle_text" to foreground.darker(),
-            "grid" to selected,
-            "wireframe" to accent,
-            "checkerboard" to background.darker(),
         )
         val palette = values.entries.joinToString(prefix = "{", postfix = "}") { (key, color) ->
             jsStringLiteral(key) + ":" + jsStringLiteral(color?.let(::colorHex) ?: "")
         }
-        return palette.removeSuffix("}") +
-            ", " + jsStringLiteral("__bbIdeaLightMode") + ":" + isLightScheme(background) + "}"
+        return palette
     }
+
+    private fun uiColor(vararg keys: String): java.awt.Color? =
+        keys.firstNotNullOfOrNull(UIManager::getColor)
 
     private fun isLightScheme(color: java.awt.Color): Boolean =
         (0.2126 * color.red + 0.7152 * color.green + 0.0722 * color.blue) / 255.0 > 0.5
+
+    private fun visibleColor(
+        background: java.awt.Color,
+        preferred: java.awt.Color,
+        minimumContrast: Double = 1.5,
+    ): java.awt.Color {
+        if (contrastRatio(background, preferred) >= minimumContrast) return preferred
+
+        val target = if (isLightScheme(background)) java.awt.Color.BLACK else java.awt.Color.WHITE
+        var candidate = preferred
+        repeat(20) {
+            candidate = blend(candidate, target, 0.12)
+            if (contrastRatio(background, candidate) >= minimumContrast) return candidate
+        }
+        return target
+    }
+
+    private fun blend(
+        color: java.awt.Color,
+        target: java.awt.Color,
+        amount: Double,
+    ): java.awt.Color = java.awt.Color(
+        (color.red + (target.red - color.red) * amount).toInt().coerceIn(0, 255),
+        (color.green + (target.green - color.green) * amount).toInt().coerceIn(0, 255),
+        (color.blue + (target.blue - color.blue) * amount).toInt().coerceIn(0, 255),
+    )
+
+    private fun contrastRatio(first: java.awt.Color, second: java.awt.Color): Double {
+        val firstLuminance = relativeLuminance(first)
+        val secondLuminance = relativeLuminance(second)
+        return (maxOf(firstLuminance, secondLuminance) + 0.05) /
+            (minOf(firstLuminance, secondLuminance) + 0.05)
+    }
+
+    private fun relativeLuminance(color: java.awt.Color): Double =
+        listOf(color.red, color.green, color.blue).map { channel ->
+            val normalized = channel / 255.0
+            if (normalized <= 0.03928) normalized / 12.92
+            else ((normalized + 0.055) / 1.055).pow(2.4)
+        }.let { (red, green, blue) ->
+            0.2126 * red + 0.7152 * green + 0.0722 * blue
+        }
 
     private fun colorHex(color: java.awt.Color): String =
         "#%02x%02x%02x".format(color.red, color.green, color.blue)
@@ -623,9 +698,16 @@ class BlockbenchFileEditor internal constructor(
         private const val MESSAGE_PLUGIN = "plugin\n"
         private const val MESSAGE_EXPORT = "export\n"
         private const val MESSAGE_PICKER = "picker\n"
+        private const val MESSAGE_PROJECT_TYPES = "project_types\n"
         private const val MESSAGE_ERROR = "error\n"
 
         private const val BRIDGE_INJECT_MARKER = "/*__INJECT__*/"
         private val NATIVE_SAVE_ACTIONS = setOf("SaveAll", "SaveDocument")
+
+        private data class ProjectType(
+            val kind: String,
+            val id: String,
+            val label: String,
+        )
     }
 }

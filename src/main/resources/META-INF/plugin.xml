@@ -11,19 +11,25 @@
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
-    <depends optional="true">com.intellij.modules.jcef</depends>
 
     <resource-bundle>messages.BlockbenchBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="Blockbench" displayType="BALLOON"/>
-        <fileType name="Blockbench Model"
+        <fileType name="BlockbenchModel"
                   implementationClass="net.kernelpanicsoft.blockbenchidea.fileTypes.BlockbenchFileType"
                   extensions="bbmodel"/>
         <fileEditorProvider implementation="net.kernelpanicsoft.blockbenchidea.editor.BlockbenchFileEditorProvider"/>
         <projectConfigurable instance="net.kernelpanicsoft.blockbenchidea.settings.BlockbenchSettingsConfigurable"
-                             displayName="Blockbench"
+                             displayName="BlockBench"
                              parentId="tools"/>
-        <applicationService serviceImplementation="net.kernelpanicsoft.blockbenchidea.editor.BlockbenchVersionManager"/>
     </extensions>
+
+    <actions>
+        <action id="Blockbench.NewProject"
+                class="net.kernelpanicsoft.blockbenchidea.actions.NewBlockbenchProjectAction"
+        >
+            <add-to-group group-id="NewGroup" anchor="last"/>
+        </action>
+    </actions>
 </idea-plugin>
