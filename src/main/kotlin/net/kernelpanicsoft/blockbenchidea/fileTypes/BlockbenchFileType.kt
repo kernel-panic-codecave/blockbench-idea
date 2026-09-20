@@ -11,10 +11,10 @@ import javax.swing.Icon
  *
  * Matches `.bbmodel` projects opened in the embedded Blockbench editor.
  */
-object BlockbenchFileType : FileType {
+class BlockbenchFileType : FileType {
 
     private val iconCache: Icon? by lazy {
-        IconLoader.getIcon("/icons/blockbench.svg", BlockbenchFileType.javaClass)
+        IconLoader.getIcon("/icons/blockbench.svg", BlockbenchFileType::class.java)
     }
 
     override fun getName(): String = "Blockbench Model"
@@ -29,5 +29,6 @@ object BlockbenchFileType : FileType {
 
     override fun isBinary(): Boolean = false
 
-    override fun getCharset(file: VirtualFile, content: ByteArray): String? = "UTF-8"
+    override fun getCharset(file: VirtualFile, content: ByteArray): String = "UTF-8"
+
 }

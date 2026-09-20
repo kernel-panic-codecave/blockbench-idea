@@ -1,10 +1,12 @@
 # blockbench-idea
 
 ![Build](https://github.com/kernel-panic-codecave/blockbench-idea/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
+[![Version](https://img.shields.io/jetbrains/plugin/v/34370.svg)](https://plugins.jetbrains.com/plugin/34370)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/34370.svg)](https://plugins.jetbrains.com/plugin/34370)
 
 Open and edit [Blockbench](https://www.blockbench.net) models directly inside IntelliJ IDEA, without an external editor.
+
+Licensed under the [GNU General Public License v3.0 or later](LICENSE).
 
 Double-clicking a `.bbmodel` file opens an editor tab with the Blockbench web app
 embedded via JCEF:
@@ -87,9 +89,9 @@ Run the IDE with the plugin installed:
 
 - Using JetBrains Marketplace:
 
-  Go to [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID) and install it by clicking the <kbd>Install to ...</kbd> button in case your IDE is running.
+  Go to [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/34370) and install it by clicking the <kbd>Install to ...</kbd> button in case your IDE is running.
 
-  You can also download the [latest release](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID/versions) from JetBrains Marketplace and install it manually using
+  You can also download the [latest release](https://plugins.jetbrains.com/plugin/34370/versions) from JetBrains Marketplace and install it manually using
   <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
 - Manually:

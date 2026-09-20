@@ -8,15 +8,15 @@ class BlockbenchFileTypeTest : BasePlatformTestCase() {
 
     fun testBbmodelExtensionRecognized() {
         val fileType = FileTypeManager.getInstance().getFileTypeByExtension("bbmodel")
-        assertEquals(BlockbenchFileType, fileType)
+        assertTrue(fileType is BlockbenchFileType)
     }
 
     fun testVirtualFilesAreRecognized() {
         val model = myFixture.addFileToProject("test.bbmodel", DEFAULT_MODEL)
-        assertEquals(BlockbenchFileType, model.fileType)
+        assertTrue(model.fileType is BlockbenchFileType)
 
         val geometry = myFixture.addFileToProject("cube.geo.json", DEFAULT_MODEL)
-        assertTrue(geometry.fileType != BlockbenchFileType)
+        assertTrue(geometry.fileType !is BlockbenchFileType)
     }
 
     companion object {

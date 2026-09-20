@@ -1,21 +1,25 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>net.kernelpanicsoft.blockbenchidea</id>
-    <name>Blockbench Idea</name>
+    <name>Blockbench</name>
     <vendor>Kernel Panic</vendor>
     <description><![CDATA[
-        <p>Open and edit <a href="https://www.blockbench.net">Blockbench</a> models directly inside IntelliJ IDEA, no external editor needed.</p>
-        <p>Double-clicking a <b>.bbmodel</b> file opens an editor tab with the Blockbench web app embedded via JCEF. The model is loaded from disk, and <kbd>Ctrl/Cmd+S</kbd> writes your changes back to the file. The <b>Text</b> tab stays available for raw JSON access.</p>
-        <p>The editor loads a local or self-hosted Blockbench web build. Configure <b>BLOCKBENCH_URL</b> or <b>BLOCKBENCH_WEB_ROOT</b> to select the runtime.</p>
+        <p>Edit <a href="https://www.blockbench.net">Blockbench</a> models without leaving your JetBrains IDE.</p>
+        <p>Open a <b>.bbmodel</b> file to use the embedded Blockbench editor. Models are loaded directly from disk, and <kbd>Ctrl/Cmd+S</kbd> saves them using Blockbench's own codecs. The standard <b>Text</b> editor remains available for raw JSON.</p>
+        <p>Use an installed Blockbench runtime, a local web build, or a self-hosted URL. Configure <b>BLOCKBENCH_URL</b> or <b>BLOCKBENCH_WEB_ROOT</b>, or install a managed runtime from <b>Settings/Preferences | Tools | Blockbench</b>.</p>
+        <p>Blockbench settings and compatible plugins can be synchronized between the embedded runtime and the standalone Blockbench profile.</p>
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends optional="true">com.intellij.modules.jcef</depends>
 
     <resource-bundle>messages.BlockbenchBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="Blockbench" displayType="BALLOON"/>
-        <fileTypeFactory implementation="net.kernelpanicsoft.blockbenchidea.fileTypes.BlockbenchFileTypeFactory"/>
+        <fileType name="Blockbench Model"
+                  implementationClass="net.kernelpanicsoft.blockbenchidea.fileTypes.BlockbenchFileType"
+                  extensions="bbmodel"/>
         <fileEditorProvider implementation="net.kernelpanicsoft.blockbenchidea.editor.BlockbenchFileEditorProvider"/>
         <projectConfigurable instance="net.kernelpanicsoft.blockbenchidea.settings.BlockbenchSettingsConfigurable"
                              displayName="Blockbench"

@@ -18,7 +18,7 @@ import org.jdom.Element
 class BlockbenchFileEditorProvider : FileEditorProvider, DumbAware {
 
     override fun accept(project: Project, file: VirtualFile): Boolean =
-        file.fileType == BlockbenchFileType
+        file.fileType is BlockbenchFileType && isJcefAvailable()
 
     override fun createEditor(project: Project, file: VirtualFile): FileEditor =
         BlockbenchFileEditor(project, file)
@@ -29,5 +29,25 @@ class BlockbenchFileEditorProvider : FileEditorProvider, DumbAware {
 
     companion object {
         const val EDITOR_TYPE_ID = "blockbench"
+
+        private val JCEF_CLASSES = arrayOf(
+            "com.intellij.ui.jcef.JBCefApp",
+            "org.cef.handler.CefLoadHandlerAdapter",
+        )
+
+        private fun isJcefAvailable(): Boolean {
+            val classLoader = BlockbenchFileEditorProvider::class.java.classLoader
+            return try {
+                JCEF_CLASSES.all { className ->
+                    Class.forName(className, false, classLoader)
+                    true
+                }
+                true
+            } catch (_: ClassNotFoundException) {
+                false
+            } catch (_: LinkageError) {
+                false
+            }
+        }
     }
 }
