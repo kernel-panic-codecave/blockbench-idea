@@ -1,19 +1,25 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>com.github.kp2048.blockbenchidea</id>
-    <name>blockbench-idea</name>
-    <vendor>kp2048</vendor>
+    <id>net.kernelpanicsoft.blockbenchidea</id>
+    <name>Blockbench Idea</name>
+    <vendor>Kernel Panic</vendor>
     <description><![CDATA[
-        <p><b>blockbench-idea</b> is a repository that provides a pure template to make it easier to create a new plugin project.</p>
-        <p>The main goal of this template is to speed up the setup phase of plugin development for both new and experienced developers by preconfiguring the project scaffold and CI, linking to the proper documentation pages, and keeping everything organized.</p>
+        <p>Open and edit <a href="https://www.blockbench.net">Blockbench</a> models directly inside IntelliJ IDEA, no external editor needed.</p>
+        <p>Double-clicking a <b>.bbmodel</b> file opens an editor tab with the Blockbench web app embedded via JCEF. The model is loaded from disk, and <kbd>Ctrl/Cmd+S</kbd> writes your changes back to the file. The <b>Text</b> tab stays available for raw JSON access.</p>
+        <p>The editor loads a local or self-hosted Blockbench web build. Configure <b>BLOCKBENCH_URL</b> or <b>BLOCKBENCH_WEB_ROOT</b> to select the runtime.</p>
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
 
-    <resource-bundle>messages.MyBundle</resource-bundle>
+    <resource-bundle>messages.BlockbenchBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.kp2048.blockbenchidea.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.kp2048.blockbenchidea.startup.MyProjectActivity" />
+        <notificationGroup id="Blockbench" displayType="BALLOON"/>
+        <fileTypeFactory implementation="net.kernelpanicsoft.blockbenchidea.fileTypes.BlockbenchFileTypeFactory"/>
+        <fileEditorProvider implementation="net.kernelpanicsoft.blockbenchidea.editor.BlockbenchFileEditorProvider"/>
+        <projectConfigurable instance="net.kernelpanicsoft.blockbenchidea.settings.BlockbenchSettingsConfigurable"
+                             displayName="Blockbench"
+                             parentId="tools"/>
+        <applicationService serviceImplementation="net.kernelpanicsoft.blockbenchidea.editor.BlockbenchVersionManager"/>
     </extensions>
 </idea-plugin>

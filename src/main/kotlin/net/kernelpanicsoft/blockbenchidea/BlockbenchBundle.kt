@@ -1,13 +1,13 @@
-package com.github.kp2048.blockbenchidea
+package net.kernelpanicsoft.blockbenchidea
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 @NonNls
-private const val BUNDLE = "messages.MyBundle"
+private const val BUNDLE = "messages.BlockbenchBundle"
 
-object MyBundle : DynamicBundle(BUNDLE) {
+object BlockbenchBundle : DynamicBundle(BUNDLE) {
 
     operator fun get(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) =
         getMessage(key, *params)
